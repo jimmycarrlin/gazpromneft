@@ -1,0 +1,16 @@
+Failure # 1 (occurred at 2022-06-21_04-56-33)
+[36mray::ImplicitFunc.train()[39m (pid=33753, ip=127.0.0.1, repr=func)
+  File "/opt/homebrew/Caskroom/miniforge/base/envs/base_env/lib/python3.9/site-packages/ray/tune/trainable.py", line 360, in train
+    result = self.step()
+  File "/opt/homebrew/Caskroom/miniforge/base/envs/base_env/lib/python3.9/site-packages/ray/tune/function_runner.py", line 385, in step
+    result = self._results_queue.get(
+  File "/opt/homebrew/Caskroom/miniforge/base/envs/base_env/lib/python3.9/queue.py", line 180, in get
+    self.not_empty.wait(remaining)
+  File "/opt/homebrew/Caskroom/miniforge/base/envs/base_env/lib/python3.9/threading.py", line 316, in wait
+    gotit = waiter.acquire(True, timeout)
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+[36mray::ImplicitFunc.train()[39m (pid=33753, ip=127.0.0.1, repr=func)
+ray.exceptions.TaskCancelledError: Task: TaskID(c35e1f786ff2017372828d74923a4ae8c575a5ef01000000) was cancelled
