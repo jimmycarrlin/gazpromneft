@@ -30,13 +30,13 @@ def matplotlib_imshow(tensorimg, one_channel=False):
 
 
 def plot_random_preds(torchmodel, loader, n_max=5):
-    """Plot Top-5 predictions for random sample of size 'n_max'."""
+    """Plot Top-5 predictions from model for random sample of size 'n_max'."""
     classes = loader.classes
     input, labels = iter(loader).next()
-    input, labels = (input[:n_max], labels[:n_max])
-    probs = torchmodel.predict_proba(input)
+    input, labels = torchmodel.to_device((input[:n_max], labels[:n_max]))
+    probs = torchmodel.from_device(torchmodel.predict_proba(input))
 
-    k = min(len(classes), 5)  # for topk()
+    k = min(len(classes), 5)              # for topk()
     max_len = len(max(classes, key=len))  # for pretty print
 
     fig = plt.figure(figsize=(18, 36 / len(input)))

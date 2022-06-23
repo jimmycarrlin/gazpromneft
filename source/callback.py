@@ -5,6 +5,7 @@ import torch
 from abc import ABCMeta, abstractmethod
 from collections.abc import Iterable
 
+from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
 from ray import tune
@@ -55,11 +56,6 @@ class CompositeCallback(Callback, Iterable):
 
 class ClassificationReporter(SummaryWriter, Callback):
     """Primitive callback. Report losses and metrics."""
-    def __init__(self, log_dir,
-                 comment='', purge_step=None, max_queue=10, flush_secs=120, filename_suffix=''):
-
-        super().__init__(log_dir, comment, purge_step, max_queue, flush_secs, filename_suffix)
-
     def __call__(self, torchmodel, train_info, val_info, epoch):
         self.add_scalar("Loss/train", train_info[0], epoch)
         self.add_scalar("Loss/val", val_info[0], epoch)
@@ -102,18 +98,32 @@ class Saver(Callback):
     def __init__(self, save_dir):
         self.save_dir = save_dir
 
-        self.best_loss = float("inf")
-        self.best_state = None
+        self.best_train_loss = float("inf")
+        self.best_train_state = None
 
-    def __call__(self, torchmodel, train_info, _, epoch):
-        model_state_dict = torchmodel.model.state_dict()
+        self.best_val_loss = float("inf")
+        self.best_val_state = None
+
+    def __call__(self, torchmodel, train_info, val_info, epoch):
+        model = torchmodel.model
+        if isinstance(model, nn.DataParallel):
+            model_state_dict = model.module.state_dict()
+        else:
+            model_state_dict = model.state_dict()
+
         torch.save(model_state_dict, self.save_dir / "backup.pt")
 
-        loss, *_ = train_info
-        if loss < self.best_loss:
-            self.best_loss = loss
-            self.best_state = model_state_dict
-            torch.save(self.best_state, self.save_dir / "best.pt")
+        train_loss, *_ = train_info
+        if train_loss < self.best_train_loss:
+            self.best_train_loss = train_loss
+            self.best_train_state = model_state_dict
+            torch.save(self.best_train_state, self.save_dir / "best_test.pt")
+
+        val_loss, *_ = val_info
+        if val_loss < self.best_val_loss:
+            self.best_val_loss = val_loss
+            self.best_val_state = model_state_dict
+            torch.save(self.best_val_state, self.save_dir / "best_val.pt")
 
     def __enter__(self):
         return self

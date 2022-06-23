@@ -102,8 +102,8 @@ class Bottleneck(nn.Module):
         return out
 
 
-# ResNet
 class ResNet(nn.Module):
+    """ResNet configurable by block class (BasicBlock or Bottleneck) and number of blocks in each of 4 layers."""
     def __init__(self, block_cls, layers, num_classes):
         super().__init__()
         self.block_cls = block_cls
@@ -182,7 +182,7 @@ def ResNet152(num_classes):
 
 class TorchModel:
     """Class wrapping torch models."""
-    def __init__(self, model, optimizer, criterion, metrics=None, callback=DefaultCallback()):
+    def __init__(self, model, optimizer, criterion, metrics=None, callback=None):
         if hasattr(criterion, "reduction"):
             criterion.reduction = "sum"
 
@@ -194,6 +194,9 @@ class TorchModel:
                     metric.top_k = metric.top_k or 1
                 else:
                     raise TypeError
+
+        if callback is None:
+            callback = DefaultCallback()
 
         self.optimizer = optimizer
         self.criterion = criterion
@@ -241,7 +244,6 @@ class TorchModel:
         return FD((epoch_loss, metrics))
 
     def _validate(self, loader):
-
         with eval_mode(self.model) as model:
 
             TD, FD = partial(TorchModel.to_device, self), partial(TorchModel.from_device, self)  # Aliases
@@ -280,6 +282,7 @@ class TorchModel:
 
     def predict_proba(self, input):
         with eval_mode(self.model) as model:
+
             output = model(input)
             probs = softmax(output, dim=1)
 
@@ -287,6 +290,7 @@ class TorchModel:
 
     def predict(self, input):
         with eval_mode(self.model) as model:
+
             output = model(input)
             _, preds = torch.max(output, dim=1)
 
